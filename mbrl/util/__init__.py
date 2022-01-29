@@ -53,8 +53,10 @@ def create_handler(cfg: Union[Dict, omegaconf.ListConfig, omegaconf.DictConfig])
         return PybulletEnvHandler()
     elif "mujoco" in target:
         from mbrl.util.mujoco import MujocoEnvHandler
-
         return MujocoEnvHandler()
+    elif "rwrl" in target:
+        from mbrl.util.rwrl import RWRLEnvHandler
+        return RWRLEnvHandler()
     else:
         raise NotImplementedError
 
