@@ -2,6 +2,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+import os
 import collections
 import csv
 import pathlib
@@ -9,6 +10,7 @@ from typing import Counter, Dict, List, Mapping, Tuple, Union
 
 import termcolor
 import torch
+from torch.utils.tensorboard import SummaryWriter
 
 LogFormatType = List[Tuple[str, str, str]]
 LogTypes = Union[int, float, torch.Tensor]
@@ -128,6 +130,12 @@ class Logger(object):
             self.register_group("train", SAC_TRAIN_LOG_FORMAT)
             self.register_group("eval", EVAL_LOG_FORMAT, color="green")
 
+        # recover tensorboard
+        tb_dir = os.path.join(log_dir, 'tensorboard')
+        os.makedirs(tb_dir, exist_ok=True)
+        self._sw = SummaryWriter(tb_dir)
+
+
     def register_group(
         self,
         group_name: str,
@@ -158,6 +166,10 @@ class Logger(object):
         self._groups[group_name] = (new_group, dump_frequency, color)
         self._group_steps[group_name] = 0
 
+    # recover tensorboard
+    def _try_sw_log(self, key, value):
+        self._sw.add_scalar(key, value )
+
     def log_histogram(self, *_args):
         pass
 
@@ -180,6 +192,10 @@ class Logger(object):
             if isinstance(value, torch.Tensor):
                 value = value.item()  # type: ignore
             meter_group.log(key, value)
+            # recover tensorboard
+            tb_key = "{}/{}".format(meter_group, key)
+            self._try_sw_log(tb_key, value, )
+
         self._group_steps[group_name] += 1
         if self._group_steps[group_name] % dump_frequency == 0:
             self._dump(group_name)
