@@ -68,7 +68,7 @@ def evaluate(
     num_episodes: int,
     video_recorder: pytorch_sac.VideoRecorder,
 ) -> float:
-    avg_episode_reward = 0
+    avg_episode_reward = []
     for episode in range(num_episodes):
         obs = env.reset()
         video_recorder.init(enabled=(episode == 0))
@@ -79,8 +79,11 @@ def evaluate(
             obs, reward, done, _ = env.step(action)
             video_recorder.record(env)
             episode_reward += reward
-        avg_episode_reward += episode_reward
-    return avg_episode_reward / num_episodes
+        avg_episode_reward.append(episode_reward)
+    # robsut test
+    avg_episode_reward = np.quantile(avg_episode_reward, 0.25)
+    # avg_episode_reward = np.mean(avg_episode_reward)
+    return avg_episode_reward 
 
 
 def maybe_replace_sac_buffer(
