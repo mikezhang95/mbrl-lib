@@ -63,6 +63,9 @@ class MetersGroup(object):
     def log(self, key: str, value: float):
         self._meters[key].update(value)
 
+    def get_iter(self, key: str):
+        return self._meters[key]._count
+
     def _dump_to_csv(self, data):
         if self._csv_writer is None:
             self._csv_writer = csv.DictWriter(
@@ -168,8 +171,8 @@ class Logger(object):
         self._group_steps[group_name] = 0
 
     # recover tensorboard
-    def _try_sw_log(self, key, value):
-        self._sw.add_scalar(key, value )
+    def _try_sw_log(self, key, value, n_iter):
+        self._sw.add_scalar(key, value, n_iter)
 
     def log_histogram(self, *_args):
         pass
@@ -194,8 +197,9 @@ class Logger(object):
                 value = value.item()  # type: ignore
             meter_group.log(key, value)
             # recover tensorboard
-            tb_key = "{}/{}".format(meter_group, key)
-            self._try_sw_log(tb_key, value, )
+            tb_key = "{}/{}".format(group_name, key)
+            n_iter = meter_group.get_iter(key)
+            self._try_sw_log(tb_key, value, n_iter)
 
         self._group_steps[group_name] += 1
         if self._group_steps[group_name] % dump_frequency == 0:
