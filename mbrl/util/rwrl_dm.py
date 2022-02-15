@@ -11,7 +11,7 @@ import numpy as np
 from mbrl.util.env import EnvHandler, Freeze
 
 def _is_rwrl_gym_env(env: gym.wrappers.TimeLimit) -> bool:
-    return "mbrl.env.rwrl_wrapper" in env.env.__class__.__module__
+    return "rwrl_dm" in env.env.__class__.__module__
 
 
 class FreezeRWRL(Freeze):
@@ -57,7 +57,7 @@ class FreezeRWRL(Freeze):
             self._env.env.env._step_count = self._step_count
 
 
-class RWRLEnvHandler(EnvHandler):
+class RWRLEnvHandlerDM(EnvHandler):
     """Env handler for Mujoco-backed gym envs"""
 
     freeze = FreezeRWRL
