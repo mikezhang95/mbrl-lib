@@ -24,10 +24,11 @@ SAC_TRAIN_LOG_FORMAT = [
     ("step", "S", "int"),
     ("batch_reward", "BR", "float"),
     ("actor_loss", "ALOSS", "float"),
+    ("actor_target_entropy", "TENTR", "float"),
     ("critic_loss", "CLOSS", "float"),
     ("alpha_loss", "TLOSS", "float"),
-    ("alpha_value", "TVAL", "float"),
-    ("actor_entropy", "AENT", "float"),
+    ("alpha_value", "ALPHA", "float"),
+    ("actor_entropy", "AENTR", "float"),
 ]
 
 
@@ -51,6 +52,11 @@ class MetersGroup(object):
         self._meters: Dict[str, AverageMeter] = collections.defaultdict(AverageMeter)
         self._csv_file = open(self._csv_file_path, "w")
         self._csv_writer = None
+
+    # recover tensorboard
+    def add_tb(self, summary_writer, group_name):
+        self._sw = summary_writer
+        self.group_name = group_name
 
     @staticmethod
     def _prepare_file(prefix: Union[str, pathlib.Path], suffix: str) -> pathlib.Path:
@@ -91,6 +97,14 @@ class MetersGroup(object):
             pieces.append(self._format(disp_key, value, ty))
         print(" | ".join(pieces))
 
+    # recover tensorboard
+    def _dump_to_tb(self, data):
+        step = data["step"]
+        for key, value in data.items():
+            if key == "step": continue
+            tb_key = "{}/{}".format(self.group_name, key)
+            self._sw.add_scalar(tb_key, value, step) 
+
     def dump(self, step: int, prefix: str, save: bool = True, color: str = "yellow"):
         if len(self._meters) == 0:
             return
@@ -99,6 +113,8 @@ class MetersGroup(object):
             data["step"] = step
             self._dump_to_csv(data)
             self._dump_to_console(data, prefix, color)
+            # recover tensorboard
+            self._dump_to_tb(data)
         self._meters.clear()
 
 
@@ -126,14 +142,14 @@ class Logger(object):
         self._groups: Dict[str, Tuple[MetersGroup, int, str]] = {}
         self._group_steps: Counter[str] = collections.Counter()
 
-        if enable_back_compatible:
-            self.register_group("train", SAC_TRAIN_LOG_FORMAT)
-            self.register_group("eval", EVAL_LOG_FORMAT, color="green")
-
         # recover tensorboard
         tb_dir = os.path.join(log_dir, 'tensorboard')
         os.makedirs(tb_dir, exist_ok=True)
         self._sw = SummaryWriter(tb_dir)
+
+        if enable_back_compatible:
+            self.register_group("train", SAC_TRAIN_LOG_FORMAT)
+            # self.register_group("eval", EVAL_LOG_FORMAT, color="green")
 
 
     def register_group(
@@ -166,9 +182,8 @@ class Logger(object):
         self._groups[group_name] = (new_group, dump_frequency, color)
         self._group_steps[group_name] = 0
 
-    # recover tensorboard
-    def _try_sw_log(self, key, value):
-        self._sw.add_scalar(key, value )
+        # recover tensorboard
+        new_group.add_tb(self._sw, group_name)
 
     def log_histogram(self, *_args):
         pass
@@ -192,9 +207,6 @@ class Logger(object):
             if isinstance(value, torch.Tensor):
                 value = value.item()  # type: ignore
             meter_group.log(key, value)
-            # recover tensorboard
-            tb_key = "{}/{}".format(meter_group, key)
-            self._try_sw_log(tb_key, value, )
 
         self._group_steps[group_name] += 1
         if self._group_steps[group_name] % dump_frequency == 0:
