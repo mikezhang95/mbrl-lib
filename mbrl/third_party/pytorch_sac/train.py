@@ -66,8 +66,8 @@ class Workspace(object):
             average_episode_reward += episode_reward
             self.video_recorder.save(f"{self.step}.mp4")
         average_episode_reward /= self.cfg.num_eval_episodes
-        self.logger.log("eval/episode_reward", average_episode_reward, self.step)
-        self.logger.dump(self.step)
+        # self.logger.log("eval/episode_reward", average_episode_reward, self.step)
+        # self.logger.dump(self.step)
         return average_episode_reward
 
     def run(self):
@@ -122,7 +122,7 @@ class Workspace(object):
 
             # evaluate agent periodically
             if self.step % self.cfg.eval_frequency == 0:
-                self.logger.log("eval/episode", episode, self.step)
+                # self.logger.log("eval/episode", episode, self.step)
                 score = self.evaluate()
                 if score > best_eval_score:
                     best_eval_score = score
