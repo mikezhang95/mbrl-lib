@@ -81,8 +81,8 @@ def evaluate(
             episode_reward += reward
         avg_episode_reward.append(episode_reward)
     # robsut test
-    avg_episode_reward = np.quantile(avg_episode_reward, 0.25)
-    # avg_episode_reward = np.mean(avg_episode_reward)
+    # avg_episode_reward = np.quantile(avg_episode_reward, 0.25)
+    avg_episode_reward = np.mean(avg_episode_reward)
     return avg_episode_reward 
 
 

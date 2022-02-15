@@ -149,7 +149,7 @@ class Logger(object):
 
         if enable_back_compatible:
             self.register_group("train", SAC_TRAIN_LOG_FORMAT)
-            self.register_group("eval", EVAL_LOG_FORMAT, color="green")
+            # self.register_group("eval", EVAL_LOG_FORMAT, color="green")
 
 
     def register_group(
