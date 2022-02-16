@@ -256,7 +256,7 @@ def train(
                     logger.dump(updates_made, save=True)
 
             # ------ Epoch ended (evaluate and save model) ------
-            if (env_steps + 1) % (cfg.overrides.epoch_length*cfg.overrides.eval_freq) == 0:
+            if (env_steps + 1) % cfg.overrides.eval_frequency == 0:
                 avg_reward, robust_reward = evaluate(
                     test_env, agent, cfg.algorithm.num_eval_episodes, video_recorder
                 )
