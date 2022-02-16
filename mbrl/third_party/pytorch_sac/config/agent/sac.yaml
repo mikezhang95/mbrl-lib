@@ -19,7 +19,7 @@ agent:
   critic_tau: 0.005
   critic_target_update_frequency: 2
   batch_size: 1024
-  learnable_temperature: true
+  learnable_temperature: false
     
 double_q_critic:
   _target_: pytorch_sac.agent.critic.DoubleQCritic
