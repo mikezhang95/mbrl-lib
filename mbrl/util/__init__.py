@@ -54,8 +54,8 @@ def create_handler(cfg: Union[Dict, omegaconf.ListConfig, omegaconf.DictConfig])
     elif "mujoco" in target:
         from mbrl.util.mujoco import MujocoEnvHandler
         return MujocoEnvHandler()
-    elif "rwrl_dm" in target:
-        from mbrl.util.rwrl_dm import RWRLEnvHandlerDM
+    elif "rwrl_gym" in target:
+        from mbrl.util.rwrl_gym import RWRLEnvHandlerGYM
         return RWRLEnvHandlerDM()
     elif "rwrl" in target:
         from mbrl.util.rwrl import RWRLEnvHandler

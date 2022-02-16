@@ -11,7 +11,7 @@ import numpy as np
 from mbrl.util.env import EnvHandler, Freeze
 
 def _is_rwrl_gym_env(env: gym.wrappers.TimeLimit) -> bool:
-    return "rwrl_dm" in env.env.__class__.__module__
+    return "rwrl_env" in env.env.__class__.__module__
 
 
 class FreezeRWRL(Freeze):
@@ -46,18 +46,18 @@ class FreezeRWRL(Freeze):
             raise RuntimeError("Tried to freeze an unsupported environment.")
 
     def __enter__(self):
-        self._init_state = self._env.env.env._physics.get_state().copy()
+        self._init_state = (
+            self._env.env.data.qpos.ravel().copy(),
+            self._env.env.data.qvel.ravel().copy(),
+        )
         self._elapsed_steps = self._env._elapsed_steps
-        self._step_count = self._env.env.env._step_count
 
     def __exit__(self, *_args):
-        with self._env.env.env._physics.reset_context():
-            self._env.env.env._physics.set_state(self._init_state)
-            self._env._elapsed_steps = self._elapsed_steps
-            self._env.env.env._step_count = self._step_count
+        self._env.set_state(*self._init_state)
+        self._env._elapsed_steps = self._elapsed_steps
 
 
-class RWRLEnvHandlerDM(EnvHandler):
+class RWRLEnvHandleriGYM(EnvHandler):
     """Env handler for Mujoco-backed gym envs"""
 
     freeze = FreezeRWRL
@@ -82,10 +82,12 @@ class RWRLEnvHandlerDM(EnvHandler):
             (tuple):  Returns the internal state
             (position and velocity), and the number of elapsed steps so far.
         """
-        state = env.env._env.physics.get_state().copy()
+        state = (
+            env.env.data.qpos.ravel().copy(),
+            env.env.data.qvel.ravel().copy(),
+        )
         elapsed_steps = env._elapsed_steps
-        step_count = env.env.env._step_count
-        return state, elapsed_steps, step_count
+        return state, elapsed_steps
 
     @staticmethod
     def set_env_state(state: Tuple, env: gym.wrappers.TimeLimit):
@@ -95,10 +97,8 @@ class RWRLEnvHandlerDM(EnvHandler):
             state (tuple): see :func:`get_current_state` for a description.
             env (:class:`gym.wrappers.TimeLimit`): the environment.
         """
-        with env.env._env.physics.reset_context():
-            env.env._env.physics.set_state(state[0])
-            env._elapsed_steps = state[1]
-            env.env.env._step_count = state[2]
+        env.set_state(*state[0])
+        env._elapsed_steps = state[1]
            
 
 

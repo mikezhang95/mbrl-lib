@@ -68,7 +68,7 @@ def evaluate(
     num_episodes: int,
     video_recorder: pytorch_sac.VideoRecorder,
 ) -> float:
-    avg_episode_reward = 0
+    episode_rewards = []
     for episode in range(num_episodes):
         obs = env.reset()
         video_recorder.init(enabled=(episode == 0))
@@ -79,8 +79,11 @@ def evaluate(
             obs, reward, done, _ = env.step(action)
             video_recorder.record(env)
             episode_reward += reward
-        avg_episode_reward += episode_reward
-    return avg_episode_reward / num_episodes
+        episode_rewards.append(episode_reward)
+
+    avg_episode_reward = np.mean(episode_rewards)
+    robust_episode_reward = np.quantile(episode_rewards, 0.25)
+    return avg_episode_reward, robust_episode_reward
 
 
 def maybe_replace_sac_buffer(
@@ -253,8 +256,8 @@ def train(
                     logger.dump(updates_made, save=True)
 
             # ------ Epoch ended (evaluate and save model) ------
-            if (env_steps + 1) % cfg.overrides.epoch_length == 0:
-                avg_reward = evaluate(
+            if (env_steps + 1) % (cfg.overrides.epoch_length*cfg.overrides.eval_freq) == 0:
+                avg_reward, robust_reward = evaluate(
                     test_env, agent, cfg.algorithm.num_eval_episodes, video_recorder
                 )
                 logger.log_data(
@@ -263,6 +266,7 @@ def train(
                         "epoch": epoch,
                         "env_step": env_steps,
                         "episode_reward": avg_reward,
+                        "robust_reward": robust_reward,
                         "rollout_length": rollout_length,
                     },
                 )

@@ -9,4 +9,5 @@ RESULTS_LOG_NAME = "eval"
 EVAL_LOG_FORMAT = [
     ("env_step", "S", "int"),
     ("episode_reward", "R", "float"),
+    ("robust_reward", "RR", "float"),
 ]
