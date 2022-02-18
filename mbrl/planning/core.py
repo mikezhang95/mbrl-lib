@@ -145,5 +145,19 @@ def load_agent(agent_path: Union[str, pathlib.Path], env: gym.Env) -> Agent:
         agent.critic.load_state_dict(torch.load(agent_path / "critic.pth"))
         agent.actor.load_state_dict(torch.load(agent_path / "actor.pth"))
         return SACAgent(agent)
+
+    elif (
+        cfg.algorithm.agent._target_
+        == "robust_sac.RobustSACAgent"
+    ):
+        from robust_sac import RobustSACAgent 
+        from .sac_wrapper import SACAgent
+        complete_agent_cfg(env, cfg.algorithm.agent)
+        agent: RobustSACAgent = hydra.utils.instantiate(cfg.algorithm.agent)
+        agent.critic.load_state_dict(torch.load(agent_path / "critic.pth"))
+        agent.actor.load_state_dict(torch.load(agent_path / "actor.pth"))
+        return SACAgent(agent)
+
+
     else:
         raise ValueError("Invalid agent configuration.")
